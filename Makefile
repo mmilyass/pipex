@@ -2,7 +2,7 @@
 
 NAME = pipex
 
-SRCS = ft_split.c helper.c pipex.c 
+SRCS = ft_split.c helper.c pipex.c check_path.c initialize_data.c
 
 OBJS = $(SRCS:.c=.o)
 
