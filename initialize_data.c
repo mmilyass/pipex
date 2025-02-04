@@ -19,12 +19,14 @@ void clean_up(t_data *data)
     int i;
 
     i = 0;
+    if (!data)
+        return;
     if (data->first_cmd)
     {
         while (data->first_cmd[i])
         {
-            if (data->first_cmd[i++])
-                free(data->first_cmd[i]);
+            if (data->first_cmd[i])
+                free(data->first_cmd[i++]);
         }
         free(data->first_cmd);
     }
@@ -33,43 +35,24 @@ void clean_up(t_data *data)
     {
         while (data->sec_cmd[i])
         {
-            if (data->sec_cmd[i++])
-                free(data->sec_cmd[i]);
+            if (data->sec_cmd[i])
+                free(data->sec_cmd[i++]);
         }
         free(data->sec_cmd);
     }
-    if (data->tmp_file)
-        free(data->tmp_file);
+    if (data->read_end)
+        free(data->read_end);
     free(data);
-}
-
-static char *put_file_name() // create the tmp_file name
-{
-    int i;
-    char *str;
-
-    str = malloc(5);
-    if (str == NULL)
-        return (NULL);
-    str[0] = 'f';
-    str[1] = 'i';
-    str[2] = 'l';
-    str[3] = 'e';
-    str[4] = '\0';
-    return (str);
 }
 
 t_data *initialize_args(t_data *data, char **argv)
 {
-    data->fd_infile = open(argv[1], O_RDONLY); // open the infile for take the input
-    if (data->fd_infile < 0)
-        return (print_error(data, errno, argv[1]), NULL);
     data->fd_outfile = open(argv[4], O_RDWR | O_CREAT | O_TRUNC, 0777); // open the outfile with o_create to creat it and with trunc to clear it
     if (data->fd_outfile < 0)
         return (print_error(data, errno, argv[4]), NULL);
-    data->fd_tmp_file = open(data->tmp_file, O_RDWR | O_CREAT | O_TRUNC, 0777); // open a tmp_file with o_create to creat it and with trunc to clear it
-    if (data->fd_tmp_file < 0)
-        return (print_error(data, errno, data->tmp_file), NULL);
+    data->fd_infile = open(argv[1], O_RDONLY); // open the infile for take the input
+    if (data->fd_infile < 0)
+        return (print_error(data, errno, argv[1]), NULL);
     data->first_cmd = ft_split(argv[2], ' '); // take the first arg and split it to use it as a command
     if (data->first_cmd == NULL)
         return (print_error(data, errno, NULL), NULL);
@@ -78,16 +61,31 @@ t_data *initialize_args(t_data *data, char **argv)
         return (print_error(data, errno, NULL), NULL);
     return (data);
 }
+void    *ft_calloc(size_t count, size_t size)
+{
+        char    *ptr;
+        size_t  total_size;
+        size_t  i;
+
+        total_size = count * size;
+        ptr = malloc(total_size);
+        if (!ptr)
+                return (NULL);
+        i = 0;
+        while (i < total_size)
+        {
+                ptr[i] = 0;
+                i++;
+        }
+        return ((void *)ptr);
+}
 t_data *initialize_data(char **argv)
 {
     t_data *data;
     int check;
-    data = malloc(sizeof(t_data)); // initialize the struct
+    data = ft_calloc(1, sizeof(t_data)); // initialize the struct
     if (data == NULL)
         return (NULL);
-    data->tmp_file = put_file_name();
-    if (data->tmp_file == NULL)
-        return (clean_up(data), NULL);
     data = initialize_args(data, argv);
     if (data == NULL)
         return (NULL);

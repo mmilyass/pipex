@@ -3,112 +3,143 @@
 /*                                                        :::      ::::::::   */
 /*   ft_split.c                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: safae <safae@student.42.fr>                +#+  +:+       +#+        */
+/*   By: imeftah- <imeftah-@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/23 10:12:08 by imeftah-          #+#    #+#             */
-/*   Updated: 2025/01/24 15:16:59 by safae            ###   ########.fr       */
+/*   Updated: 2025/02/03 11:03:46 by imeftah-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 
 #include "pipex.h"
 
-static int	count_words(char *str, char c)
+static int      count_words(char *str, char c)
 {
-	int	i;
-	int	x;
+        int     i;
+        int     x;
 
-	i = 0;
-	x = 0;
-	while (str[i])
-	{
-		if ((str[i] != c && (str[i + 1] == c || str[i + 1] == '\0')))
-			x++;
-		i++;
-	}
-	return (x);
+        i = 0;
+        x = 0;
+        while (str[i])
+        {
+                if (str[i] == '"' || str[i] == '\'')
+                {
+                        i++;
+                        while (str[i] != '"' && str[i] != '\'')
+                                i++;
+                        i++;
+                        x++;
+                }
+                if ((str[i] != c && (str[i + 1] == c || str[i + 1] == '\0')))
+                        x++;
+                i++;
+        }
+        return (x);
 }
 
-static void	fill_index_array(char *str, char *src, int start, int end)
+static void     fill_index_array(char *str, char *src, int start, int end)
 {
-	int	x;
+        int     x;
 
-	x = 0;
-	while (x < end)
-	{
-		str[x] = src[start];
-		x++;
-		start++;
-	}
-	str[x] = '\0';
+        x = 0;
+        while (x < end)
+        {
+                str[x] = src[start];
+                x++;
+                start++;
+        }
+        str[x] = '\0';
 }
 
-static void	*free_array(char **array, int index)
+static void     *free_array(char **array, int index)
 {
-	int	i;
+        int     i;
 
-	i = 0;
-	while (i < index)
-	{
-		free(array[i]);
-		i++;
-	}
-	array[index] = NULL;
-	return (NULL);
+        i = 0;
+        while (i < index)
+        {
+                free(array[i]);
+                i++;
+        }
+        array[index] = NULL;
+        return (NULL);
 }
 
-static char	**fill_array(char **array, char *s, char c, int words)
+static char     **fill_array(char **array, char *s, char c, int words)
 {
-	int	i;
-	int	end;
-	int	index;
+        int     i;
+        int     end;
+        int     index;
 
-	index = 0;
-	i = 0;
-	while (index < words)
-	{
-		while (s[i] == c && s[i] != '\0')
-			i++;
-		end = 0;
-		while (s[i] != c && s[i] != '\0')
-		{
-			end++;
-			i++;
-		}
-		array[index] = malloc((end + 1) * sizeof(char));
-		if (array[index] == NULL)
-			return (free_array(array, index));
-		fill_index_array(array[index], s, i - end, end);
-		index++;
-	}
-	array[index] = NULL;
-	return (array);
+        index = 0;
+        i = 0;
+        while (index < words)
+        {
+                while (s[i] == c && s[i] != '\0' && s[i] != '"' && s[i] != '\'')
+                        i++;
+                end = 0;
+                while (s[i] != c && s[i] != '\0' && s[i] != '"' && s[i] != '\'')
+                {
+                        end++;
+                        i++;
+                }
+                if (s[i] == '"' || s[i] == '\'')
+                {
+                        i++;
+                        end++;
+                        while (s[i] != '"' && s[i] != '\'')
+                        {
+                                end++;
+                                i++;
+                        }
+                        i++;
+                        end++;
+                }
+                array[index] = malloc((end + 1) * sizeof(char));
+                if (array[index] == NULL)
+                        return (free_array(array, index));
+                fill_index_array(array[index], s, i - end, end);
+                index++;
+        }
+        array[index] = NULL;
+        return (array);
 }
 
-char	**ft_split(char *s1, char c)
+char    **ft_split(char *s1, char c)
 {
-	int		words;
-	char	**array;
-	char	*s;
-
-	if (s1 == NULL)
-		return (NULL);
-	if (s1[0] == '\0')
-	{
-		array = malloc(1 * sizeof(char *));
-		if (array == NULL)
-			return (NULL);
-		array[0] = NULL;
-		return (array);
-	}
-	s = (char *)s1;
-	words = count_words(s, c);
-	if (words == -2)
-		return (NULL);
-	array = malloc((words + 1) * sizeof(char *));
-	if (array == NULL)
-		return (NULL);
-	if (fill_array(array, s, c, words) == NULL)
-		return (free(array), NULL);
-	return (array);
+        int             words;
+        char    **array;
+        char    *s;
+        if (s1 == NULL)
+                return (NULL);
+        if (s1[0] == '\0')
+        {
+                array = malloc(1 * sizeof(char *));
+                if (array == NULL)
+                        return (NULL);
+                array[0] = NULL;
+                return (array);
+        }
+        s = (char *)s1;
+        words = count_words(s, c);
+        if (words == -2)
+                return (NULL);
+        array = malloc((words + 1) * sizeof(char *));
+        if (array == NULL)
+                return (NULL);
+        if (fill_array(array, s, c, words) == NULL)
+                return (free(array), NULL);
+        return (array);
 }
+
+// int main()
+// {
+//         int cw = count_words("ilyass meftah el menani \"ilyass hh\"oups", ' ');
+//         char **array = ft_split("ilyass meftah el menani \"ilyass hh\"\"oups", ' ');
+//         while (*array)
+//         {
+//                 printf("%s\n",*array);
+//                 array++;
+//         }
+//         printf("%d\n",cw);
+// }

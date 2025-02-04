@@ -3,58 +3,74 @@
 /*                                                        :::      ::::::::   */
 /*   check_path.c                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: safae <safae@student.42.fr>                +#+  +:+       +#+        */
+/*   By: imeftah- <imeftah-@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/24 11:50:59 by safae             #+#    #+#             */
-/*   Updated: 2025/01/27 15:56:21 by safae            ###   ########.fr       */
+/*   Updated: 2025/02/03 09:24:56 by imeftah-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "pipex.h"
 
-char **return_line_path(char **envp)
+static void free_array(char **array)
+{
+    int i;
+
+    i = 0;
+    while (array[i])
+    {
+        free(array[i]);
+        i++;
+    }
+    free(array);
+}
+
+char **return_line_path_splited(char **envp)
 {
     int i;
     char **hold_env;
 
     i = 0;
-    while(envp[i] != NULL)
+    while (envp[i] != NULL)
     {
-        if (ft_strncmp(envp[i], "PATH=", 5) == 0)       // take the line that have the path only
+        if (ft_strncmp(envp[i], "PATH=", 5) == 0)       // Take the line that has the PATH variable
             break;
         i++;
     }
-    hold_env = ft_split(envp[i] + 5, ':');              // split it with ':' to get each path and + 5 to not involve "PATH="
+    hold_env = ft_split(envp[i] + 5, ':');              // Split with ':' to get each path, skipping "PATH="
     if (hold_env == NULL)
         return (NULL);
-    return(hold_env);
+    return (hold_env);
 }
 
-int check_path(char *name, char **envp, t_data *data)
+int check_path(char *name, char **envp, t_data *data) // this function check the path of the program to be executed 
 {
+    char **paths_array;
+    char *holder;
+    char *holder2;
     int i;
-    char **hold_env;
-    char *path;
     
     i = 0;
-    hold_env = return_line_path(envp);        // take an array of strings that have paths for checks
-    if (hold_env == NULL)
-        return(clean_up(data), -1);
-    while (hold_env[i] != NULL)
+    paths_array = return_line_path_splited(envp);
+    if(paths_array == NULL)
+        return(-1);
+    while(paths_array[i])
     {
-        hold_env[i] = ft_strjoin(hold_env[i], "/");     // add '/' at the beginning to go to it as dir
-        if (hold_env[i] == NULL)
-            return(clean_up(data), -1);
-        path = ft_strjoin(hold_env[i], name);       // then add to it the program name 
-        if (hold_env[i] == NULL)
-            return(-1);
-        if (access(path, F_OK & X_OK) == 0)         // the access fnct will look for this program in the path 
+        holder = ft_strjoin(paths_array[i], "/");
+        if (holder == NULL)
+            return(free_array(paths_array), -1);
+        holder2 = ft_strjoin(holder, name);
+        free(holder);
+        if (holder2 == NULL)
+            return(free_array(paths_array), -1);
+        if (access(holder2, F_OK && X_OK) == 0)
         {
-            data->path = path;
-            return(0);                              // it will return 0 if it find it and i will do the same
+            data->path = holder2;
+            free_array(paths_array);
+            return(0);
         }
-        free(path);
+        free(holder2);
         i++;
     }
-    return(-1);
+    return(free_array(paths_array), -1);
 }
