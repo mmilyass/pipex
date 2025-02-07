@@ -1,112 +1,105 @@
 #include "pipex.h"
 
-int     run_fcmd_pipe(t_data *data, int fd, int fd2, char **first_cmd)
+void     run_cmd(t_data *data, int fd, int fd2, char **cmd, char **envp)
 {
     int check;
+    int code;
+
+    code = check_path(cmd[0], envp, data);
+    if (code == 126 || code == 127)
+        access_error(data, code, cmd[0]);
     check = dup2(fd2, STDIN_FILENO);        // redirect the stdin to the file so it will take from it
     if (check < 0)
-        return(print_error(data, errno, NULL), -1);
+        other_error(data);
     check = dup2(fd, STDOUT_FILENO);        // redirect the stout to the write end of the pipe
     if (check < 0)
-        return(print_error(data, errno, NULL), -1);
+        other_error(data);
     close(fd);
     close(fd2);
-    check = execve(data->path, first_cmd, NULL);    // replace the process with the program in the execve
+    check = execve(data->path, cmd, NULL);    // replace the process with the program in the execve
     if (check < 0)
-        return(print_error(data, errno, data->first_cmd[0]), -1);
-    return(0);
+        execve_error(data, cmd[0]);
+    exit(1);
 }
 
-int     run_scmd_pipe(t_data *data, int fd, int fd2, char **sec_cmd)
+void    handle_children(t_data *data, char **envp, int argc, int i)
 {
-    int check;
-    check = dup2(fd, STDOUT_FILENO);            // redirect the stout to put the output in the file "outfile"
-    if (check < 0)
-        return(print_error(data, errno, NULL), -1);
-    check = dup2(fd2, STDIN_FILENO);            // redirect the stdin to the file to take from it the "tmp_file"
-    if (check < 0)
-        return(print_error(data, errno, NULL), -1);
-    close(fd);
-    close(fd2);
-    check = execve(data->path, sec_cmd, NULL);  // run the new program that will replace the process
-    if (check < 0)
-        return(print_error(data, errno, data->sec_cmd[0]), -1);
-    return(0);
-}
-
-static  char    *read_end(int fd)   //this function read from the read_end_pipe
-{
-    char *buffer;
-    char *holder;
-    char *tmp_holder;
-    int size;
-
-    holder = calloc(1,sizeof(char));
-    if (holder == NULL)
-        return(NULL);
-    while(1)
+    if(i == 0)
     {
-        buffer = calloc(2, sizeof(char));
-        if (buffer == NULL)
-            return(NULL);
-        size = read(fd, buffer, 1);
-        if (size == -1)
-            return (free(buffer), NULL);
-        if (size == 0)
-            break;
-        tmp_holder = ft_strjoin(holder, buffer);
-        free(buffer);
-        free(holder);
-        holder = tmp_holder;
+        close(data->pipes[0]);
+        run_cmd(data, data->pipes[1], data->fd_infile, data->command[i], envp);
     }
-    return(holder);
-}
-
-static  int parent_process(t_data *data, char **envp)
-{
-    int check;
-    int status;
-    wait(&status);                             // wait for the child process
-    if (WIFEXITED(status))    // this is a macro check whether the child exit properly and not with a segnal
+    else if (i == argc - 4)
     {
-        close(data->fd_pipe[1]);
-        check = check_path(data->sec_cmd[0], envp, data);                       // check the path of the command in the PATH envp
-        if (check == -1)
-            return(print_error(data, errno, data->sec_cmd[0]), -1);
-        run_scmd_pipe(data, data->fd_outfile, data->fd_pipe[0],  data->sec_cmd);   //run the second command 
+        close(data->pipes[1]);
+        run_cmd(data, data->fd_outfile, data->other_pipe, data->command[i], envp);
     }
-    return(0);
+    else
+    {
+        close(data->pipes[0]);
+        run_cmd(data, data->pipes[1], data->other_pipe, data->command[i], envp);            
+    }
 }
-int main(int argc, char **argv, char **envp) 
+int main(int argc, char **argv, char **envp)
 {
-    printf("%d\n",argc);
-    if (argc == 5)
+    if (argc > 4)
     {
         t_data *data;
         int check;
+        int i = 0;
 
-        data = initialize_data(argv);       // initialize the struct
+        data = initialize_data(argc, argv);
         if (data == NULL)
-            exit(0);
-        data->id_fork = fork();             // create a child process
-        if (data->id_fork < 0)
-            return(print_error(data, errno, NULL), 1);
-        if (data->id_fork == 0)             // in the child process (fork return 0 mean we are in the child process)
+            other_error(data);
+        
+        while (i < argc - 3)
         {
-            close(data->fd_pipe[0]);        // close the read end we dont need it now            
-            check = check_path(data->first_cmd[0], envp, data);     // if it return 0 then it find it in the PATH
-            if (check == -1)
+            if (i != argc - 4)
             {
-                return(print_error(data, errno, data->first_cmd[0]), 1);
+                check = pipe(data->pipes);
+                if (check < 0)
+                    other_error(data);
             }
-            run_fcmd_pipe(data, data->fd_pipe[1], data->fd_infile, data->first_cmd);   // put the command in the write end of the pipe
+            data->id_fork = fork();
+            if (data->id_fork < 0)
+                other_error(data);
+
+            if (data->id_fork == 0)
+            {
+                handle_children(data, envp, argc, i);
+            }
+            else
+            {
+                if (i > 0)
+                    close(data->other_pipe);
+                data->other_pipe = data->pipes[0];
+                close(data->pipes[1]);
+            }
+            i++;
         }
-        else
+        close(data->other_pipe);
+        close(data->pipes[0]);
+        int status;
+        int last_status;
+        for (int s = 0; s < i; s++) 
         {
-            check = parent_process(data, envp);
-            if (check == -1)
-                return(1);
+            wait(&status);
+            if (WIFEXITED(status)) {
+                last_status = WEXITSTATUS(status);
+            }
         }
+        // printf("%d\n", last_status);
+        parent_exit(data, last_status);
     }
-    printf("you entered more that five args");
+    else
+        printf("you mistakely forgot to enter more that 4 argument !!\n");
 }
+
+
+// i was dividing the main function and what i made today is handling entering a path in the args and i handled the errors what still is the leaks and dividing
+// tommorow fix the cleen_up function and learn about the herdoc and what it is and do it and organize the code okey ?
+
+// there is something in this main i need to address is that i wait for all children and then see whether the last one exit with an error if yes i exit in the standart error with -
+// - error that it happened and this is what you see in the last while loop in the main function.
+// another thing is that i see each child and it exit status to make sure the message will be correct and i handle the message in the (error_message.c) file you can go and see it
+// another thing is 
