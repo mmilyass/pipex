@@ -1,95 +1,81 @@
 #include "pipex.h"
 
-void    *ft_calloc(size_t count, size_t size)
-{
-        char    *ptr;
-        size_t  total_size;
-        size_t  i;
-
-        total_size = count * size;
-        ptr = malloc(total_size);
-        if (!ptr)
-                return (NULL);
-        i = 0;
-        while (i < total_size)
-        {
-                ptr[i] = 0;
-                i++;
-        }
-        return ((void *)ptr);
-}
-void print_error(t_data *data, int err_no, char *str)
-{
-    if (str == NULL)
-    {
-        printf("%s\n", strerror(err_no));
-        clean_up(data);
-        exit(-1);
-    }
-    else
-    {
-        printf("%s: %s\n", str, strerror(err_no));
-        clean_up(data);
-        exit(-1);
-    }
-}
-
-void clean_up(t_data *data)
-{
-    int i;
-    int j;
-
-    i = 0;
-    if (!data)
-        return;
-    if (data->command)
-    {
-        while (data->command[i])
-        {
-            j = 0;
-            while (data->command[i][j])
-            {
-                free(data->command[i][j]);
-                j++;
-            }
-            free(data->command[i]);
-            i++;
-        }
-    }
-    free(data);
-}
-
-t_data *initialize_args(t_data *data, char **argv, int argc)
+void    initialize_args(t_data *data)
 {
     int i;
     i = 0;
-    data->fd_outfile = open(argv[argc - 1], O_RDWR | O_CREAT | O_TRUNC, 0777); // open the outfile with o_create to creat it and with trunc to clear it
+    data->fd_outfile = open(data->argv[data->argc - 1], O_WRONLY | O_CREAT | O_TRUNC, 0777); // open the outfile with o_create to creat it and with trunc to clear it
     if (data->fd_outfile < 0)
         other_error(data);
-    data->fd_infile = open(argv[1], O_RDONLY); // open the infile for take the input
+    data->fd_infile = open(data->argv[1], O_RDONLY); // open the infile for take the input
     if (data->fd_infile < 0)
         other_error(data);
-    data->command = malloc((argc - 2) * sizeof(char **));
+    data->command = malloc((data->argc - 2) * sizeof(char **));
     if (data->command == NULL)
         other_error(data);
-    while (i < argc - 3)
+    while (i < data->argc - 3)
     {
-        data->command[i] = ft_split(argv[i + 2], ' ');
+        data->command[i] = ft_split(data->argv[i + 2], ' ');
         if (data->command[i] == NULL)
             other_error(data);
         i++;
     }
     data->command[i] = NULL;
-    return (data);
 }
 
-t_data *initialize_data(int argc, char **argv)
+void    generate_file(t_data *data)
+{
+    int i;
+    char *holder;
+    holder = ft_itoa((unsigned long long)&i);
+    if (holder == NULL)
+        other_error(data);
+    data->random_file = ft_strjoin("/tmp/", holder);
+    free(holder);
+    if (data->random_file == NULL)
+        other_error(data);
+    data->fd_ran_file = open(data->random_file, O_WRONLY | O_CREAT | O_TRUNC, 0777);
+    if (data->fd_ran_file < 0)
+        other_error(data);
+}
+
+void    initialize_with_hdoc(t_data *data)
+{
+    int i;
+
+    i = 0;
+    data->fd_outfile = open(data->argv[data->argc - 1], O_WRONLY | O_CREAT, 0777); // open the outfile with o_create to creat it and without trunc cause need to read under
+    if (data->fd_outfile < 0)
+        other_error(data);
+    generate_file(data);                    // this is the file tha it will take the input from the here_doc
+    data->command = malloc((data->argc - 3) * sizeof(char **));   // -4 for (executable, here_doc, dili, outfile) and +1 to make a NULL at the end so -3
+    if (data->command == NULL)
+        other_error(data);
+    while (i < data->argc - 4)          // -4 to put only cmds 
+    {
+        data->command[i] = ft_split(data->argv[i + 3], ' ');   // start from the third param so there where the first cmd is
+        if (data->command[i] == NULL)
+            other_error(data);
+        i++;
+    }
+    data->command[i] = NULL;
+    data->buffer_hdoc = read_from_stdin(data);
+    if (!data->buffer_hdoc)
+        other_error(data);
+    i = write(data->fd_ran_file, data->buffer_hdoc, ft_strlen(data->buffer_hdoc));
+    if (i < 0)
+        other_error(data);
+    data->argc -= 1;        // you may wonder about this i did it for the same as the -4 above to evitate the 3 first args and the last 
+}
+
+t_data *initialize_data(int argc, char **argv, char **envp)
 {
     t_data *data;
-    int check;
     data = ft_calloc(1, sizeof(t_data)); // initialize the struct
     if (data == NULL)
         return (NULL);
-    data = initialize_args(data, argv, argc);
+    data->argc = argc;
+    data->argv = argv;
+    data->envp = envp;
     return (data);
 }

@@ -6,7 +6,7 @@
 /*   By: imeftah- <imeftah-@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/23 10:12:08 by imeftah-          #+#    #+#             */
-/*   Updated: 2025/02/03 11:03:46 by imeftah-         ###   ########.fr       */
+/*   Updated: 2025/02/10 16:29:45 by imeftah-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -134,12 +134,10 @@ char    **ft_split(char *s1, char c)
 
 // int main()
 // {
-//         int cw = count_words("ilyass meftah el menani \"ilyass hh\"oups", ' ');
-//         char **array = ft_split("ilyass meftah el menani \"ilyass hh\"\"oups", ' ');
+//         char **array = ft_split("awk '{print $1}'", ' ');
 //         while (*array)
 //         {
 //                 printf("%s\n",*array);
 //                 array++;
 //         }
-//         printf("%d\n",cw);
 // }

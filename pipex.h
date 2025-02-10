@@ -6,7 +6,7 @@
 /*   By: imeftah- <imeftah-@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/23 10:10:12 by imeftah-          #+#    #+#             */
-/*   Updated: 2025/02/07 15:23:34 by imeftah-         ###   ########.fr       */
+/*   Updated: 2025/02/10 15:30:03 by imeftah-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,31 +19,40 @@
 #include <string.h>
 #include <errno.h>
 #include <sys/wait.h>
+#include "./libft/libft.h"
 
 typedef struct s_data
 {
     char ***command;
+    char **argv;
+    char **envp;
+    char *buffer_hdoc;
+    char *random_file;
     char *path;
+    char here_doc;
     int pipes[2];
     int other_pipe;
     int fd_infile;
     int fd_outfile;
+    int fd_ran_file;
+    int argc;
     int id_fork;
 }   t_data;
 
-char	**ft_split(char *s1, char c);
-int	    ft_strlen(char *str);
-char	*ft_strdup(char *string);
-char	*ft_strjoin(char *s1, char *s2);
-int	    ft_strncmp(char *s1, char *s2, unsigned int n);
 int     check_path(char *name, char **envp, t_data *data);
-t_data  *initialize_data(int argc, char **argv);
+char    **ft_split(char *s1, char c);
+t_data  *initialize_data(int argc, char **argv, char **envp);
 void    clean_up(t_data *data);
-void    print_error(t_data *data, int err_no, char *str);
 void    execve_error(t_data *data, char *cmd);
 void    access_error(t_data *data, int err_code, char *cmd);
 void    parent_exit(t_data *data, int err_code);
 void    other_error(t_data *data);
+void    initialize_with_hdoc(t_data *data);
+void    initialize_args(t_data *data);
+void    check_herdoc(t_data *data, char *argument);
+char    *read_from_stdin(t_data *data);
+char	*get_next_line(int fd);
+void    close_files(t_data *data);
 
 
 #endif
