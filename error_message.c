@@ -6,7 +6,7 @@
 /*   By: imeftah- <imeftah-@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/11 10:16:15 by imeftah-          #+#    #+#             */
-/*   Updated: 2025/02/18 10:31:39 by imeftah-         ###   ########.fr       */
+/*   Updated: 2025/02/18 11:32:41 by imeftah-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -83,7 +83,7 @@ void	other_error(t_data *data, char *name)
 	else
 		ft_printf("./pipex: %s: %s\n", strerror(errno), name);
 	clean_up(data);
-	exit(errno);
+	exit(1);
 }
 
 /*
