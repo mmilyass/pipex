@@ -6,7 +6,7 @@
 /*   By: imeftah- <imeftah-@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/11 10:57:22 by imeftah-          #+#    #+#             */
-/*   Updated: 2025/02/15 15:12:53 by imeftah-         ###   ########.fr       */
+/*   Updated: 2025/02/18 10:54:19 by imeftah-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,9 +23,9 @@ int	wait_children(t_data *data)
 	last_status = 0;
 	while (i < data->argc - 3)
 	{
-		check = wait(&status);
+		check = waitpid(data->pids[i], &status, 0);
 		if (check == -1)
-			other_error(data);
+			other_error(data, NULL);
 		if (WIFEXITED(status))
 			last_status = WEXITSTATUS(status);
 		i++;
@@ -43,16 +43,16 @@ void	run_cmd(t_data *data, int outfile, int infile, char **cmd)
 		outfile = data->fd_outfile;
 	}
 	if (cmd[0] == NULL)
-		other_error(data);
+		other_error(data, cmd[0]);
 	code = check_path(cmd[0], data->envp, data);
 	if (code != 0)
 		access_error(data, code, cmd[0]);
 	check = dup2(infile, STDIN_FILENO);
 	if (check < 0)
-		other_error(data);
+		other_error(data, cmd[0]);
 	check = dup2(outfile, STDOUT_FILENO);
 	if (check < 0)
-		other_error(data);
+		other_error(data, NULL);
 	close(outfile);
 	close(infile);
 	check = execve(data->path, cmd, NULL);
@@ -63,28 +63,24 @@ void	run_cmd(t_data *data, int outfile, int infile, char **cmd)
 
 void	handle_children(t_data *data, int i)
 {
-	if (i != data->argc - 4 && data->argc != 4)
-		close(data->pipes[0]);
-	if (i == 0 && data->here_doc == 'y')
+	if (i == 0 && data->here_doc == YES)
 	{
-		data->fd_ran_file = open(data->random_file, O_RDONLY);
-		if (data->fd_ran_file < 0)
-			other_error(data);
-		if (unlink(data->random_file) == -1)
-			other_error(data);
+		close(data->pipes[0]);
+		open_unlink_ran_file(data);
 		run_cmd(data, data->pipes[1], data->fd_ran_file, data->command[i]);
 	}
-	else if (i == 0 && data->here_doc != 'y')
+	else if (i == 0 && data->here_doc != YES)
 	{
-		if (data->fd_infile != -1)
-			run_cmd(data, data->pipes[1], data->fd_infile, data->command[i]);
-		other_error(data);
+		close(data->pipes[0]);
+		open_infile(data);
+		run_cmd(data, data->pipes[1], data->fd_infile, data->command[i]);
 	}
 	else if (i == data->argc - 4)
 	{
-		close(data->pipes[1]);
+		open_outfile(data);
 		run_cmd(data, data->fd_outfile, data->other_pipe, data->command[i]);
 	}
+	close(data->pipes[0]);
 	run_cmd(data, data->pipes[1], data->other_pipe, data->command[i]);
 }
 
@@ -98,21 +94,21 @@ void	still_process(t_data *data)
 		if (i != data->argc - 4)
 		{
 			if (pipe(data->pipes) < 0)
-				other_error(data);
+				other_error(data, NULL);
 		}
 		data->id_fork = fork();
 		if (data->id_fork < 0)
-			other_error(data);
+			other_error(data, NULL);
 		if (data->id_fork == 0)
 			handle_children(data, i);
 		else
 		{
+			data->pids[i] = data->id_fork;
 			if (i++ > 0)
 				close(data->other_pipe);
 			data->other_pipe = data->pipes[0];
 			if (data->argc != 4)
 				close(data->pipes[1]);
-			data->here_doc = '\0';
 		}
 	}
 }
@@ -126,9 +122,9 @@ int	main(int argc, char **argv, char **envp)
 	{
 		data = initialize_data(argc, argv, envp);
 		if (data == NULL)
-			other_error(data);
+			other_error(data, NULL);
 		check_herdoc(data, argv[1]);
-		if (data->here_doc == 'y')
+		if (data->here_doc == YES)
 		{
 			initialize_with_hdoc(data);
 			data->fd_ran_file = open(data->random_file, O_RDWR);

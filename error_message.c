@@ -6,7 +6,7 @@
 /*   By: imeftah- <imeftah-@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/11 10:16:15 by imeftah-          #+#    #+#             */
-/*   Updated: 2025/02/15 10:30:02 by imeftah-         ###   ########.fr       */
+/*   Updated: 2025/02/18 10:31:39 by imeftah-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,14 +15,14 @@
 void	check_write(t_data *data, int check)
 {
 	if (check == -1)
-		other_error(data);
+		other_error(data, NULL);
 }
 
 void	execve_error(t_data *data, char *cmd)
 {
 	int	check;
 
-	check = write(2, "zsh: command not found: ", 25);
+	check = write(2, "./pipex: command not found: ", 25);
 	check_write(data, check);
 	check = write(2, cmd, ft_strlen(cmd));
 	check_write(data, check);
@@ -38,7 +38,7 @@ void	access_error(t_data *data, int err_code, char *cmd)
 
 	if (err_code == 126)
 	{
-		check = write(2, "zsh: permission denied: ", 25);
+		check = write(2, "./pipex: permission denied: ", 25);
 		check_write(data, check);
 		check = write(2, cmd, ft_strlen(cmd));
 		check_write(data, check);
@@ -49,7 +49,7 @@ void	access_error(t_data *data, int err_code, char *cmd)
 	}
 	if (err_code == 127)
 	{
-		check = write(2, "zsh: command not found: ", 25);
+		check = write(2, "./pipex: command not found: ", 29);
 		check_write(data, check);
 		check = write(2, cmd, ft_strlen(cmd));
 		check_write(data, check);
@@ -76,16 +76,14 @@ void	parent_exit(t_data *data, int err_code)
 	}
 }
 
-void	other_error(t_data *data)
+void	other_error(t_data *data, char *name)
 {
-	if (errno == 0)
-	{
-		clean_up(data);
-		exit(0);
-	}
-	perror("zsh");
+	if (name == NULL)
+		ft_printf("./pipex: %s\n", strerror(errno));
+	else
+		ft_printf("./pipex: %s: %s\n", strerror(errno), name);
 	clean_up(data);
-	exit(1);
+	exit(errno);
 }
 
 /*

@@ -6,7 +6,7 @@
 /*   By: imeftah- <imeftah-@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/24 11:50:59 by safae             #+#    #+#             */
-/*   Updated: 2025/02/13 16:48:45 by imeftah-         ###   ########.fr       */
+/*   Updated: 2025/02/17 12:07:49 by imeftah-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -92,7 +92,7 @@ int	check_path(char *name, char **envp, t_data *data)
 		return (code);
 	paths_array = return_line_path_splited(envp);
 	if (paths_array == NULL)
-		other_error(data);
+		other_error(data, NULL);
 	while (paths_array[i])
 	{
 		holder = generate_path(paths_array[i], name);

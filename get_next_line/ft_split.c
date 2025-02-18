@@ -6,11 +6,11 @@
 /*   By: imeftah- <imeftah-@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/23 10:12:08 by imeftah-          #+#    #+#             */
-/*   Updated: 2025/02/15 10:25:39 by imeftah-         ###   ########.fr       */
+/*   Updated: 2025/02/17 12:05:55 by imeftah-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "pipex.h"
+#include "../pipex.h"
 
 static void	fill_index_array(char *str, char *src, int start, int end)
 {
