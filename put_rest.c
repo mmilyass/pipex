@@ -6,7 +6,7 @@
 /*   By: imeftah- <imeftah-@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/11 11:08:30 by imeftah-          #+#    #+#             */
-/*   Updated: 2025/02/18 10:56:43 by imeftah-         ###   ########.fr       */
+/*   Updated: 2025/02/18 13:23:36 by imeftah-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -59,7 +59,10 @@ void	read_from_stdin(t_data *data)
 			}
 		}
 		else
+		{
+			free(buffer);
 			break ;
+		}
 		free(buffer);
 	}
 	return ;
