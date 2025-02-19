@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   pipex.c                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: imeftah- <imeftah-@student.42.fr>          +#+  +:+       +#+        */
+/*   By: safae <safae@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/11 10:57:22 by imeftah-          #+#    #+#             */
-/*   Updated: 2025/02/18 10:54:19 by imeftah-         ###   ########.fr       */
+/*   Updated: 2025/02/19 10:28:34 by safae            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,6 +40,7 @@ void	run_cmd(t_data *data, int outfile, int infile, char **cmd)
 
 	if (data->argc == 4)
 	{
+		open_outfile(data);
 		outfile = data->fd_outfile;
 	}
 	if (cmd[0] == NULL)
@@ -54,7 +55,6 @@ void	run_cmd(t_data *data, int outfile, int infile, char **cmd)
 	if (check < 0)
 		other_error(data, NULL);
 	close(outfile);
-	close(infile);
 	check = execve(data->path, cmd, NULL);
 	if (check < 0)
 		execve_error(data, cmd[0]);
@@ -65,13 +65,15 @@ void	handle_children(t_data *data, int i)
 {
 	if (i == 0 && data->here_doc == YES)
 	{
-		close(data->pipes[0]);
+		if (data->argc != 4)
+			close(data->pipes[0]);
 		open_unlink_ran_file(data);
 		run_cmd(data, data->pipes[1], data->fd_ran_file, data->command[i]);
 	}
 	else if (i == 0 && data->here_doc != YES)
 	{
-		close(data->pipes[0]);
+		if (data->argc != 4)
+			close(data->pipes[0]);
 		open_infile(data);
 		run_cmd(data, data->pipes[1], data->fd_infile, data->command[i]);
 	}
@@ -80,7 +82,8 @@ void	handle_children(t_data *data, int i)
 		open_outfile(data);
 		run_cmd(data, data->fd_outfile, data->other_pipe, data->command[i]);
 	}
-	close(data->pipes[0]);
+	if (data->argc != 4)
+		close(data->pipes[0]);
 	run_cmd(data, data->pipes[1], data->other_pipe, data->command[i]);
 }
 
@@ -138,7 +141,7 @@ int	main(int argc, char **argv, char **envp)
 		parent_exit(data, last_status);
 	}
 	else if (argc <= 3)
-		perror("you enter less than 4 arguments");
+		perror("you need more arguments!");
 }
 /*
 -> this is the main part and in it i have the importent functions.
