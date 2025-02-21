@@ -6,7 +6,7 @@
 /*   By: imeftah- <imeftah-@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/17 10:59:33 by imeftah-          #+#    #+#             */
-/*   Updated: 2025/02/18 10:20:17 by imeftah-         ###   ########.fr       */
+/*   Updated: 2025/02/19 11:08:07 by imeftah-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,7 +33,7 @@ void	open_infile(t_data *data)
 
 void	open_unlink_ran_file(t_data *data)
 {
-	data->fd_ran_file = open(data->random_file, O_RDONLY);
+	data->fd_ran_file = open(data->random_file, O_RDONLY | O_CREAT);
 	if (data->fd_ran_file == -1)
 		other_error(data, data->random_file);
 	if (unlink(data->random_file) == -1)

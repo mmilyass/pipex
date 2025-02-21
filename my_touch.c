@@ -6,7 +6,7 @@
 /*   By: imeftah- <imeftah-@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/14 10:49:46 by imeftah-          #+#    #+#             */
-/*   Updated: 2025/02/17 12:06:51 by imeftah-         ###   ########.fr       */
+/*   Updated: 2025/02/19 11:08:21 by imeftah-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,6 +23,8 @@ void	my_touch(t_data *data)
 	id = fork();
 	if (id == 0)
 	{
+		open_outfile(data);
+		open_unlink_ran_file(data);
 		check = dup2(data->fd_outfile, STDOUT_FILENO);
 		if (check == -1)
 			other_error(data, NULL);
@@ -31,8 +33,6 @@ void	my_touch(t_data *data)
 			other_error(data, NULL);
 		close(data->fd_outfile);
 		close(data->fd_ran_file);
-		if (unlink(data->random_file) == -1)
-			other_error(data, NULL);
 		check = execve("/usr/bin/cat", name, NULL);
 		if (check == -1)
 			other_error(data, NULL);
